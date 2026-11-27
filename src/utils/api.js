@@ -1,15 +1,11 @@
 import axios from 'axios';
 
-const API_URL = (
-  import.meta.env.VITE_API_URL || 'http://localhost:5000'
-).replace(/\/$/, '');
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const api = axios.create({
   baseURL: `${API_URL}/api`,
   withCredentials: true,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  headers: { 'Content-Type': 'application/json' },
 });
 
 export default api;
@@ -58,11 +54,27 @@ export const getMessages = () => api.get('/messages');
 export const markMessageRead = (id) => api.put(`/messages/${id}/read`);
 export const deleteMessage = (id) => api.delete(`/messages/${id}`);
 
-// Admin – media
+// Admin – media (FormData: do NOT force Content-Type so browser sets multipart boundary)
 export const getMedia = (params) => api.get('/media', { params });
 export const uploadMedia = (formData) =>
   api.post('/media/upload', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
+    transformRequest: [(data, headers) => {
+      // Let the browser set multipart boundary for FormData
+      if (data instanceof FormData && headers) {
+        delete headers['Content-Type'];
+      }
+      return data;
+    }],
+  });
+export const replaceMedia = (id, formData) =>
+  api.post(`/media/${id}/replace`, formData, {
+    transformRequest: [(data, headers) => {
+      if (data instanceof FormData && headers) {
+        delete headers['Content-Type'];
+      }
+      return data;
+    }],
   });
 export const updateMedia = (id, data) => api.put(`/media/${id}`, data);
 export const deleteMedia = (id) => api.delete(`/media/${id}`);
